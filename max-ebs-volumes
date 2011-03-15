@@ -1,0 +1,13 @@
+#!/bin/bash
+
+total=0
+for l in {d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}
+do
+	for n in {1..15}
+	do
+		./create-volume ebs-max-test sd$l$n 1 >/dev/null 2>&1
+		total=$(( $total + 1 ))
+		echo "Created: sd$l$n. Total volumes created: $total"
+		sleep 5
+	done
+done 

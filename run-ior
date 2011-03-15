@@ -1,0 +1,10 @@
+#!/bin/bash
+
+for t in {4k,32k,128k}
+do
+	for size in {128k,32m,1g}
+	do
+		mpirun -np 14 --hostfile hosts --mca btl tcp,self IOR -C -N 14 -b $size -F -m -t $t -o /gluster/ior > ior-$t-$size.txt
+		sleep 10 # not sure why this is needed
+	done
+done

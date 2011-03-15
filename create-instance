@@ -1,0 +1,17 @@
+#!/bin/bash
+
+AMAZON_LINUX_AMI_OLD="ami-2272864b"
+AMAZON_LINUX_AMI="ami-74f0061d"
+GLUSTER_AMI=" ami-a81cecc1"
+
+NAME=$1
+
+if [ $# -ne 1 ]; then
+    echo "usage: $0 <Name>"
+    exit 1
+fi
+
+instance=$(ec2-run-instances $GLUSTER_AMI --key vikas --instance-count 1 --group "Gluster" --instance-type m1.large  --availability-zone us-east-1a| grep "^INSTANCE" | cut -f2)
+
+ec2-create-tags $instance --tag Owner="$EC2_OWNER" --tag Name="$NAME"
+

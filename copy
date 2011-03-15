@@ -1,0 +1,13 @@
+#!/bin/bash
+
+NAME=$1
+
+if [ $# -lt 2 ]; then
+    echo "Usage: $0 <Name> file1 ..."
+    exit 1
+fi
+
+hostname=$(ec2-describe-instances --filter instance-state-name=pending,running,shutting-down,stopping,stopped --filter tag:"Owner=$EC2_OWNER" --filter tag:"Name=$NAME" | grep "^INSTANCE" | cut -f4)
+
+shift 1
+scp -i $AWS_HOME/$EC2_SSH_KEY.pem -o StrictHostKeyChecking=no $* root@$hostname:

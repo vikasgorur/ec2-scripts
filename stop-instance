@@ -1,0 +1,11 @@
+#!/bin/bash
+
+NAME=$1
+
+if [ $# -ne 1 ]; then
+    echo "usage: $0 <Name>"
+    exit 1
+fi
+
+instance=$(ec2-describe-instances --filter tag:"Owner=$EC2_OWNER" --filter tag:"Name=$NAME"|grep "^INSTANCE"|cut -f2)
+ec2-stop-instances $instance

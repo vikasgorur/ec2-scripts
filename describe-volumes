@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ec2-describe-volumes --filter tag:"Owner=$EC2_OWNER"

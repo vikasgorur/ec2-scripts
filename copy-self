@@ -1,0 +1,16 @@
+#!/bin/bash
+
+NAME=$1
+
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 <Name>"
+    exit 1
+fi
+
+rm -f ec2-scripts.tar.gz
+tar zcf ec2-scripts.tar.gz *
+
+hostname=$(ec2-describe-instances --filter instance-state-name=pending,running,shutting-down,stopping,stopped --filter tag:"Owner=$EC2_OWNER" --filter tag:"Name=$NAME" | grep "^INSTANCE" | cut -f4)
+
+scp -i $AWS_HOME/$EC2_SSH_KEY.pem -o StrictHostKeyChecking=no ec2-scripts.tar.gz root@$hostname:
+ssh -i $AWS_HOME/$EC2_SSH_KEY.pem -o StrictHostKeyChecking=no root@$hostname 'tar zxf /root/ec2-scripts.tar.gz'

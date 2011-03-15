@@ -1,0 +1,21 @@
+#!/bin/bash
+
+mv /etc/yum.repos.d/disabled/CentOS-Base.repo /etc/yum.repos.d/
+yum -y install openmpi openmpi-devel
+echo "/usr/lib64/openmpi/1.3.2-gcc/lib" >> /etc/ld.so.conf
+/sbin/ldconfig
+echo "export PATH=$PATH:/usr/lib64/openmpi/1.3.2-gcc/bin" >> /root/.bash_profile
+
+export PATH=$PATH:/usr/lib64/openmpi/1.3.2-gcc/bin
+
+wget http://184.106.64.176/ior-2.10.3.tar.gz
+tar zxf ior-2.10.3.tar.gz
+cd IOR && make
+cp src/C/IOR /usr/bin
+cd ~
+
+wget http://184.106.64.176/mdtest-1.8.3.tar.gz
+tar zxf mdtest-1.8.3.tar.gz
+cd mdtest-1.8.3 && make
+cp mdtest /usr/bin
+cd ~

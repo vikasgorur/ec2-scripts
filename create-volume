@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# create-volume Server0 sdd 10
+
+if [ $# -lt 3 ]; then
+    echo "usage: $0 <Name> <device> <size>"
+    exit 1
+fi
+
+NAME=$1
+DEVICE=$2
+SIZE=$3
+
+volume=$(ec2-create-volume --size $SIZE --availability-zone us-east-1a |cut -f2)
+ec2-create-tags $volume --tag "Owner=$EC2_OWNER" --tag "Name=$NAME-$DEVICE"
+
+instance=$(ec2-describe-instances --filter instance-state-name=pending,running,stopping,stopped --filter tag:"Owner=$EC2_OWNER" --filter tag:"Name=$NAME"|grep "^INSTANCE"|cut -f2)
+
+ec2-attach-volume $volume --instance $instance --device $DEVICE

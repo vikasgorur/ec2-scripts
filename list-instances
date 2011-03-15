@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ec2-describe-instances --filter instance-state-name=running,pending,stopping,stopped,shutting-down --filter tag:"Owner=$EC2_OWNER"|grep "Name"|cut -f3,5
