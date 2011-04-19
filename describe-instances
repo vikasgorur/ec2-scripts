@@ -1,3 +1,48 @@
 #!/bin/bash
 
-ec2-describe-instances --filter instance-state-name=pending,running,shutting-down,stopping,stopped --filter tag:"Owner=$EC2_OWNER"
+
+function describe_instances()
+# describe_instances [OWNER]
+{
+    OWNER=$1
+
+    if [ -z $OWNER ]; then
+        FILTER=""
+    else
+        FILTER="--filter tag:"Owner=$OWNER""
+    fi
+
+    ec2-describe-instances --filter instance-state-name=running,pending,stopping,stopped,shutting-down $FILTER
+}
+
+
+function usage()
+{
+    echo "usage: $0 [-o <Owner>]"
+}
+
+
+function main()
+{
+    while getopts "ho:" OPT; do
+        case "$OPT" in
+            h)
+                usage;
+                exit 1
+                ;;
+            o)
+                OWNER=$OPTARG
+                ;;
+            \?)
+                usage;
+                exit 1
+                ;;
+        esac
+    done
+
+    shift $(($OPTIND - 1))
+
+    describe_instances $OWNER
+}
+
+main $*;

@@ -1,11 +1,56 @@
 #!/bin/bash
 
-NAME=$1
+function terminate_instance()
+{
+# terminate_instance OWNER NAME
+    OWNER=$1
+    NAME=$2
 
-if [ $# -ne 1 ]; then
-    echo "usage: $0 <Name>"
-    exit 1
-fi
+    instance=$(ec2-describe-instances --filter tag:"Owner=$OWNER" --filter tag:"Name=$NAME"|grep "^INSTANCE"|cut -f2)
+    ec2-terminate-instances $instance
+}
 
-instance=$(ec2-describe-instances --filter tag:"Owner=$EC2_OWNER" --filter tag:"Name=$NAME"|grep "^INSTANCE"|cut -f2)
-ec2-terminate-instances $instance
+
+function usage()
+{
+    echo "usage: $0 -o <Owner> <Name>"
+}
+
+
+function main()
+{
+    while getopts "ho:" OPT; do
+        case "$OPT" in
+            h)
+                usage;
+                exit 1
+                ;;
+            o)
+                OWNER=$OPTARG
+                ;;
+            \?)
+                usage;
+                exit 1
+                ;;
+        esac
+    done
+
+    shift $(($OPTIND - 1))
+
+    if [ $# -ne 1 ]; then
+        usage;
+        exit 1
+    fi
+
+    NAME=$1
+
+    if [ -z $OWNER ]; then
+        echo "Must specify owner of the instance"
+        usage;
+        exit 1;
+    fi
+
+    terminate_instance $OWNER $NAME
+}
+
+main $*;

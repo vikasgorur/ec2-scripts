@@ -4,14 +4,56 @@ AMAZON_LINUX_AMI_OLD="ami-2272864b"
 AMAZON_LINUX_AMI="ami-74f0061d"
 GLUSTER_AMI="ami-5c8d7e35"
 
-NAME=$1
+function create_instance()
+# create_instance KEY OWNER NAME
+{
+    KEY=$1
+    OWNER=$2
+    NAME=$3
 
-if [ $# -ne 1 ]; then
-    echo "usage: $0 <Name>"
-    exit 1
-fi
+    instance=$(ec2-run-instances $GLUSTER_AMI --key $KEY --instance-count 1 --group "Gluster" --instance-type m1.large  --availability-zone us-east-1a| grep "^INSTANCE" | cut -f2)
 
-instance=$(ec2-run-instances $GLUSTER_AMI --key vikas --instance-count 1 --group "Gluster" --instance-type m1.large  --availability-zone us-east-1a| grep "^INSTANCE" | cut -f2)
+    ec2-create-tags $instance --tag Owner="$OWNER" --tag Name="$NAME"
+}
 
-ec2-create-tags $instance --tag Owner="$EC2_OWNER" --tag Name="$NAME"
 
+function usage()
+{
+    echo "usage: $0 -k <key> -o <Owner> <Name>"
+}
+
+
+function main()
+{
+    while getopts "ho:k:" OPT; do
+        case "$OPT" in
+            h)
+                usage;
+                exit 1
+                ;;
+            o)
+                OWNER=$OPTARG
+                ;;
+            k)
+                KEY=$OPTARG
+                ;;
+            \?)
+                usage;
+                exit 1
+                ;;
+        esac
+    done
+
+    shift $(($OPTIND - 1))
+
+    if [ $# -ne 1 ]; then
+        usage;
+        exit 1
+    fi
+
+    NAME=$1
+
+    create_instance $KEY $OWNER $NAME
+}
+
+main $*;
