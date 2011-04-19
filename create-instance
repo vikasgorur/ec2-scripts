@@ -5,13 +5,17 @@ AMAZON_LINUX_AMI="ami-74f0061d"
 GLUSTER_AMI="ami-5c8d7e35"
 
 function create_instance()
-# create_instance KEY OWNER NAME
+# create_instance KEY OWNER NAME GROUP TYPE ZONE
 {
     KEY=$1
     OWNER=$2
     NAME=$3
 
-    instance=$(ec2-run-instances $GLUSTER_AMI --key $KEY --instance-count 1 --group "Gluster" --instance-type m1.large  --availability-zone us-east-1a| grep "^INSTANCE" | cut -f2)
+    GROUP=$4
+    TYPE=$5
+    ZONE=$6
+
+    instance=$(ec2-run-instances $GLUSTER_AMI --key $KEY --instance-count 1 --group $GROUP --instance-type $TYPE  --availability-zone $ZONE| grep "^INSTANCE" | cut -f2)
 
     ec2-create-tags $instance --tag Owner="$OWNER" --tag Name="$NAME"
 }
@@ -19,13 +23,24 @@ function create_instance()
 
 function usage()
 {
-    echo "usage: $0 -k <key> -o <Owner> <Name>"
+    echo "usage: $0 [-g <Group>] [-t <Instance Type>] [-a <Availability Zone>] -k <key> -o <Owner> <Name>"
+    cat<<EOF
+Defaults:
+        <Group> = Gluster
+        <Instance Type> = m1.large
+        <Availability Zone> = us-east-1a
+EOF
 }
 
 
 function main()
 {
-    while getopts "ho:k:" OPT; do
+    # defaults
+    GROUP="Gluster"
+    TYPE="m1.large"
+    ZONE="us-east-1a"
+
+    while getopts "ho:k:g:t:a:" OPT; do
         case "$OPT" in
             h)
                 usage;
@@ -36,6 +51,15 @@ function main()
                 ;;
             k)
                 KEY=$OPTARG
+                ;;
+            g)
+                GROUP=$OPTARG
+                ;;
+            t)
+                TYPE=$OPTARG
+                ;;
+            a)
+                ZONE=$OPTARG
                 ;;
             \?)
                 usage;
@@ -53,7 +77,13 @@ function main()
 
     NAME=$1
 
-    create_instance $KEY $OWNER $NAME
+    if [ -z $KEY ] || [ -z $OWNER ]; then
+        echo "Must specify key and owner"
+        usage;
+        exit 1;
+    fi
+
+    create_instance $KEY $OWNER $NAME $GROUP $TYPE $ZONE
 }
 
 main $*;
