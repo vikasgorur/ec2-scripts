@@ -15,9 +15,17 @@ function create_instance()
     TYPE=$5
     ZONE=$6
 
-    instance=$(ec2-run-instances $GLUSTER_AMI --key $KEY --instance-count 1 --group $GROUP --instance-type $TYPE  --availability-zone $ZONE| grep "^INSTANCE" | cut -f2)
+    if [ -z $ZONE ]; then
+        ZONECMD=""
+    else
+        ZONECMD="--availability-zone $ZONE"
+    fi
+
+    instance=$(ec2-run-instances $GLUSTER_AMI --key $KEY --instance-count 1 --group $GROUP --instance-type $TYPE  $ZONECMD| grep "^INSTANCE" | cut -f2)
 
     ec2-create-tags $instance --tag Owner="$OWNER" --tag Name="$NAME"
+
+    echo "Instance $instance created."
 }
 
 
@@ -28,7 +36,6 @@ function usage()
 Defaults:
         <Group> = Gluster
         <Instance Type> = m1.large
-        <Availability Zone> = us-east-1a
 EOF
 }
 
@@ -38,7 +45,7 @@ function main()
     # defaults
     GROUP="Gluster"
     TYPE="m1.large"
-    ZONE="us-east-1a"
+    ZONE=""
 
     while getopts "ho:k:g:t:a:" OPT; do
         case "$OPT" in
