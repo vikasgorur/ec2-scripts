@@ -70,7 +70,12 @@ optparse = OptionParser.new do |opts|
   opts.on('-e', '--expired', "Show only expired instances") { |e| options[:expired] = true }
 end
 
-optparse.parse!
+begin
+  optparse.parse!
+rescue OptionParser::InvalidOption
+  puts optparse.help
+  exit(1)
+end
 
 describe(filterOwner=options[:owner], showOnlyExpired=options[:expired])
 

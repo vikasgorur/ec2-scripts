@@ -87,7 +87,12 @@ optparse = OptionParser.new do |opts|
   opts.on('-m', '--mail ADDRESS', "E-mail address for reminders") { |m| options[:mail] = m }
 end
 
-optparse.parse!
+begin
+  optparse.parse!
+rescue OptionParser::InvalidOption
+  puts optparse.help
+  exit(1)
+end
 
 if options[:key].empty? or options[:owner].empty? or ARGV.length != 1
   puts "Must specify KEY, OWNER, and NAME"
