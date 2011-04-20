@@ -49,7 +49,7 @@ def create_spot_instance(name, options)
 
   tags = [{"Owner" => options[:owner]}, {"Name" => name}]
   if not options[:expires].empty?
-    expire_date = DateTime.parse(Time.now.to_s) + Integer(options[:expires])
+    expire_date = DateTime.now + Integer(options[:expires])
     tags += [{"Expires" => expire_date.to_s}]
   end
 

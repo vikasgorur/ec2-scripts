@@ -7,10 +7,10 @@ require 'optparse'
 ACCESS_KEY_ID = ENV['ACCESS_KEY_ID']
 SECRET_ACCESS_KEY = ENV['SECRET_ACCESS_KEY']
 
-def describe(filterOwner="")
+def describe(filterOwner="", showOnlyExpired=false)
   ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY)
 
-  puts "#{'Instance ID'.ljust(12)}  #{'Type'.ljust(14)}  #{'Billing'.ljust(10)}  #{'Launch Time'.ljust(24)}  #{'Owner'.ljust(12)}  #{'Name'.ljust(20)}\n\n"
+  puts "#{'Instance ID'.ljust(12)}  #{'Type'.ljust(14)}  #{'Billing'.ljust(10)}  #{'Launch Time'.ljust(24)}  #{'Expires'.ljust(8)}  #{'Owner'.ljust(12)}  #{'Name'.ljust(20)}\n\n"
 
   if filterOwner != ""
     rsItems = ec2.describe_instances(:filter => [{"tag:Owner" => filterOwner}]).reservationSet.item
@@ -33,6 +33,7 @@ def describe(filterOwner="")
 
       owner = ""
       name = ""
+      expires = ""
 
       if not instanceItem.tagSet.nil?
         tag = instanceItem.tagSet.item.find_all {|i| i.key == "Owner"}[0]
@@ -44,10 +45,18 @@ def describe(filterOwner="")
         if not tag.nil? and not tag.value.nil?
           name = tag.value
         end
+
+        expire_date = nil
+        tag = instanceItem.tagSet.item.find_all {|i| i.key == "Expires"}[0]
+        if not tag.nil? and not tag.value.nil?
+          expire_date = DateTime.parse(tag.value)
+          expires = "#{(DateTime.parse(tag.value) - DateTime.now).to_i} days"
+        end
       end
 
-      if (filterOwner.empty?) or (filterOwner == owner) and (state == "running")
-        puts "#{instanceId.ljust(12)}  #{type.ljust(14)}  #{billing.ljust(10)}  #{launchTime.ljust(24)}  #{owner.ljust(12)}  #{name.ljust(20)}"
+      if ((filterOwner.empty?) or (filterOwner == owner)) and (state == "running") and
+          ((showOnlyExpired == false) or (not expire_date.nil? and (expire_date < DateTime.now)))
+        puts "#{instanceId.ljust(12)}  #{type.ljust(14)}  #{billing.ljust(10)}  #{launchTime.ljust(24)}  #{expires.ljust(8)}  #{owner.ljust(12)}  #{name.ljust(20)}"
       end
     end
   end
@@ -59,12 +68,13 @@ optparse = OptionParser.new do |opts|
   opts.banner = "Usage: list-instances [-o <Owner>]"
 
   options[:owner] = ""
-  opts.on('-o', '--owner OWNER', 'Show only instances belonging to given owner') do |o|
-    options[:owner] = o
-  end
+  opts.on('-o', '--owner OWNER', "Show only instances belonging to given owner") { |o| options[:owner] = o }
+
+  options[:expired] = false
+  opts.on('-e', '--expired', "Show only expired instances") { |e| options[:expired] = true }
 end
 
 optparse.parse!
 
-describe(filterOwner=options[:owner])
+describe(filterOwner=options[:owner], showOnlyExpired=options[:expired])
 
