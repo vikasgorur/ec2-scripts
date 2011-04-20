@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Begin user-editable section
+export ACCESS_KEY_ID="AKIAIDM26U6HBZN4HC4A"
+export SECRET_ACCESS_KEY="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"
 
 # Name of the SSH key. A corresponding key file should exist in this directory.
 # If the key name is "vikas", the file should be called "vikas.pem"
