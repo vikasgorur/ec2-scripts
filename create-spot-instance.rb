@@ -53,13 +53,17 @@ def create_spot_instance(name, options)
     tags += [{"Expires" => expire_date.to_s}]
   end
 
+  if not options[:mail].empty?
+    tags += [{"Mail" => options[:mail]}]
+  end
+
   ec2.create_tags(:resource_id => instanceId, :tag => tags)
 end
 
 options = {}
 
 optparse = OptionParser.new do |opts|
-  opts.banner = "Usage: create-spot-instance -k KEY -o OWNER [-t TYPE] [-z ZONE] [-g GROUP] [-e DAYS] NAME"
+  opts.banner = "Usage: create-spot-instance -k KEY -o OWNER [-t TYPE] [-z ZONE] [-g GROUP] [-e DAYS] [-m ADDR] NAME"
 
   options[:key] = ""
   opts.on('-k', '--key KEY', "SSH key name for the instance") { |k| options[:key] = k }
@@ -78,6 +82,9 @@ optparse = OptionParser.new do |opts|
 
   options[:expires] = ""
   opts.on('-e', '--expires DAYS', "Expiration period for the instance (in days)") { |e| options[:expires] = e }
+
+  options[:mail] = ""
+  opts.on('-m', '--mail ADDRESS', "E-mail address for reminders") { |m| options[:mail] = m }
 end
 
 optparse.parse!
