@@ -10,7 +10,7 @@ SECRET_ACCESS_KEY = ENV['SECRET_ACCESS_KEY']
 def describe(filterOwner="")
   ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY)
 
-  puts "Instance ID\t#{'Owner'.ljust(12)}\t#{'Name'.ljust(20)}\tLaunch Time\n\n"
+  puts "Instance ID\t#{'Type'.ljust(10)}\t#{'Owner'.ljust(12)}\t#{'Name'.ljust(20)}\tLaunch Time\n\n"
 
   if filterOwner != ""
     rsItems = ec2.describe_instances(:filter => [{"tag:Owner" => filterOwner}]).reservationSet.item
@@ -22,6 +22,7 @@ def describe(filterOwner="")
     reservationItem.instancesSet.item.each do |instanceItem|
       instanceId = instanceItem.instanceId
       launchTime = instanceItem.launchTime.gsub(/T|Z/, " ")
+      type       = instanceItem.instanceType
 
       owner = ""
       name = ""
@@ -38,7 +39,9 @@ def describe(filterOwner="")
         end
       end
 
-      puts "#{instanceId}\t#{owner.ljust(12)}\t#{name.ljust(20)}\t#{launchTime}"
+      if (filterOwner.empty?) or (filterOwner == owner)
+        puts "#{instanceId}\t#{type.ljust(10)}\t#{owner.ljust(12)}\t#{name.ljust(20)}\t#{launchTime}"
+      end
     end
   end
 end
