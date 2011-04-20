@@ -10,7 +10,7 @@ SECRET_ACCESS_KEY = ENV['SECRET_ACCESS_KEY']
 def describe(filterOwner="")
   ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY)
 
-  puts "Instance ID\t#{'Type'.ljust(10)}\t#{'Owner'.ljust(12)}\t#{'Name'.ljust(20)}\tLaunch Time\n\n"
+  puts "#{'Instance ID'.ljust(12)}  #{'Type'.ljust(14)}  #{'Billing'.ljust(10)}  #{'Launch Time'.ljust(24)}  #{'Owner'.ljust(12)}  #{'Name'.ljust(20)}\n\n"
 
   if filterOwner != ""
     rsItems = ec2.describe_instances(:filter => [{"tag:Owner" => filterOwner}]).reservationSet.item
@@ -23,6 +23,13 @@ def describe(filterOwner="")
       instanceId = instanceItem.instanceId
       launchTime = instanceItem.launchTime.gsub(/T|Z/, " ")
       type       = instanceItem.instanceType
+      if instanceItem.instanceLifecycle.nil?
+        billing = "On-demand"
+      else
+        billing = "Spot"
+      end
+
+      state = instanceItem.instanceState.name
 
       owner = ""
       name = ""
@@ -39,8 +46,8 @@ def describe(filterOwner="")
         end
       end
 
-      if (filterOwner.empty?) or (filterOwner == owner)
-        puts "#{instanceId}\t#{type.ljust(10)}\t#{owner.ljust(12)}\t#{name.ljust(20)}\t#{launchTime}"
+      if (filterOwner.empty?) or (filterOwner == owner) and (state == "running")
+        puts "#{instanceId.ljust(12)}  #{type.ljust(14)}  #{billing.ljust(10)}  #{launchTime.ljust(24)}  #{owner.ljust(12)}  #{name.ljust(20)}"
       end
     end
   end
