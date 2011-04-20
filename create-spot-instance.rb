@@ -8,12 +8,14 @@ ACCESS_KEY_ID = ENV['ACCESS_KEY_ID']
 SECRET_ACCESS_KEY = ENV['SECRET_ACCESS_KEY']
 GLUSTER_AMI="ami-5c8d7e35"
 
-def create_spot_instance(name, key, owner, type, zone, group)
+def create_spot_instance(name, options)
   ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY)
 
+  reqStarted = Time.now
   req = ec2.request_spot_instances(:instance_count => 1, :spot_price => "0.6", :image_id => GLUSTER_AMI,
-                                   :instance_type => type, :availability_zone => zone, :security_group => group,
-                                   :key_name => key)
+                                   :instance_type => options[:type], :availability_zone => options[:zone],
+                                   :security_group => options[:group], :key_name => options[:key])
+
   sir = req.spotInstanceRequestSet.item[0].spotInstanceRequestId
   state = req.spotInstanceRequestSet.item[0].state
 
@@ -36,19 +38,28 @@ def create_spot_instance(name, key, owner, type, zone, group)
       print "."
       sleep(5)
     else
-      puts "done."
+      now = Time.now
+      min = ((now - reqStarted) / 60).floor
+      sec = ((now - reqStarted) - min*60).floor
+      puts "done (#{min}m #{sec}s)."
       puts "Instance #{instanceId} has been created."
       instanceSpawned = true
     end
   end
 
-  ec2.create_tags(:resource_id => instanceId, :tag => [{"Owner" => owner}, {"Name" => name}])
+  tags = [{"Owner" => options[:owner]}, {"Name" => name}]
+  if not options[:expires].empty?
+    expire_date = DateTime.parse(Time.now.to_s) + Integer(options[:expires])
+    tags += [{"Expires" => expire_date.to_s}]
+  end
+
+  ec2.create_tags(:resource_id => instanceId, :tag => tags)
 end
 
 options = {}
 
 optparse = OptionParser.new do |opts|
-  opts.banner = "Usage: create-spot-instance -k KEY -o OWNER [-t TYPE] [-z ZONE] [-g GROUP] NAME"
+  opts.banner = "Usage: create-spot-instance -k KEY -o OWNER [-t TYPE] [-z ZONE] [-g GROUP] [-e DAYS] NAME"
 
   options[:key] = ""
   opts.on('-k', '--key KEY', "SSH key name for the instance") { |k| options[:key] = k }
@@ -64,6 +75,9 @@ optparse = OptionParser.new do |opts|
 
   options[:group] = "Gluster"
   opts.on('-g', '--group GROUP', "Security group (default: Gluster)") { |g| options[:group] = g }
+
+  options[:expires] = ""
+  opts.on('-e', '--expires DAYS', "Expiration period for the instance (in days)") { |e| options[:expires] = e }
 end
 
 optparse.parse!
@@ -71,8 +85,9 @@ optparse.parse!
 if options[:key].empty? or options[:owner].empty? or ARGV.length != 1
   puts "Must specify KEY, OWNER, and NAME"
   puts optparse.help
+  exit(1)
 end
 
 name = ARGV[0]
 
-create_spot_instance(name, options[:key], options[:owner], options[:type], options[:zone], options[:group])
+create_spot_instance(name, options)
