@@ -4,8 +4,8 @@ require 'rubygems'
 require 'AWS'
 require 'optparse'
 
-ACCESS_KEY_ID = ENV['ACCESS_KEY_ID']
-SECRET_ACCESS_KEY = ENV['SECRET_ACCESS_KEY']
+ACCESS_KEY_ID = ENV['AMAZON_ACCESS_KEY_ID']
+SECRET_ACCESS_KEY = ENV['AMAZON_SECRET_ACCESS_KEY']
 
 def describe(filterOwner="", showOnlyExpired=false)
   ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY)

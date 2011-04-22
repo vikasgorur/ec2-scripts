@@ -4,8 +4,8 @@ require 'rubygems'
 require 'AWS'
 require 'optparse'
 
-ACCESS_KEY_ID = ENV['ACCESS_KEY_ID']
-SECRET_ACCESS_KEY = ENV['SECRET_ACCESS_KEY']
+ACCESS_KEY_ID = ENV['AMAZON_ACCESS_KEY_ID']
+SECRET_ACCESS_KEY = ENV['AMAZON_SECRET_ACCESS_KEY']
 GLUSTER_AMI="ami-5c8d7e35"
 
 def terminate_instance(name, options)
