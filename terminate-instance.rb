@@ -1,8 +1,12 @@
 #!/usr/bin/env ruby
 
-require 'rubygems'
-require 'AWS'
-require 'optparse'
+begin
+  require 'rubygems'
+  require 'AWS'
+  require 'optparse'
+rescue LoadError
+  puts "Could not load a required module. Make sure you have the gem 'amazon-ec2' installed."
+end
 
 ACCESS_KEY_ID = ENV['AMAZON_ACCESS_KEY_ID']
 SECRET_ACCESS_KEY = ENV['AMAZON_SECRET_ACCESS_KEY']
