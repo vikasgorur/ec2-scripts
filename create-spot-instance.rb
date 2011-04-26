@@ -4,8 +4,10 @@ begin
   require 'rubygems'
   require 'AWS'
   require 'optparse'
+  require 'date'
 rescue LoadError
   puts "Could not load a required module. Make sure you have the gem 'amazon-ec2' installed."
+  exit(1)
 end
 
 ACCESS_KEY_ID = ENV['AMAZON_ACCESS_KEY_ID']
@@ -81,8 +83,8 @@ optparse = OptionParser.new do |opts|
   options[:zone] = nil
   opts.on('-z', '--zone ZONE', "Availability zone for the instance") { |z| options[:zone] = z }
 
-  options[:group] = "Gluster"
-  opts.on('-g', '--group GROUP', "Security group (default: Gluster)") { |g| options[:group] = g }
+  options[:group] = "default"
+  opts.on('-g', '--group GROUP', "Security group (default: 'default')") { |g| options[:group] = g }
 
   options[:expires] = ""
   opts.on('-e', '--expires DAYS', "Expiration period for the instance (in days)") { |e| options[:expires] = e }
