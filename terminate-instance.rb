@@ -4,8 +4,10 @@ begin
   require 'rubygems'
   require 'AWS'
   require 'optparse'
+  require 'date'
 rescue LoadError
   puts "Could not load a required module. Make sure you have the gem 'amazon-ec2' installed."
+  exit(1)
 end
 
 ACCESS_KEY_ID = ENV['AMAZON_ACCESS_KEY_ID']
