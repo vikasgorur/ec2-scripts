@@ -18,7 +18,13 @@ def describe(filterOwner="", showOnlyExpired=false)
 
   puts "#{'Instance ID'.ljust(12)}  #{'Type'.ljust(14)}  #{'Billing'.ljust(10)}  #{'Launch Time'.ljust(24)}  #{'Expires'.ljust(8)}  #{'Owner'.ljust(12)}  #{'Name'.ljust(20)}\n\n"
 
-  rsItems = ec2.describe_instances().reservationSet.item
+  result = ec2.describe_instances()
+
+  if not result.reservationSet.nil?
+    rsItems = result.reservationSet.item
+  else
+    return
+  end
 
   rsItems.each do |reservationItem|
     reservationItem.instancesSet.item.each do |instanceItem|
