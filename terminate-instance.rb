@@ -45,23 +45,39 @@ def terminate_instance(name, options)
   end
 end
 
-options = {}
 
-optparse = OptionParser.new do |opts|
-  opts.banner = "Usage: terminate-instance -o OWNER NAME"
-
-  options[:owner] = ""
-  opts.on('-o', '--owner OWNER', "Owner of the instance") { |o| options[:owner] = o }
+def verify_access_key()
+  if not (ENV.has_key?("AMAZON_ACCESS_KEY_ID") and ENV.has_key?("AMAZON_SECRET_ACCESS_KEY"))
+    puts "Please set AMAZON_ACCESS_KEY_ID and AMAZON_SECRET_ACCESS_KEY."
+    exit(1)
+  end
 end
 
-optparse.parse!
 
-if options[:owner].empty? or ARGV.length != 1
-  puts "Must specify OWNER and NAME"
-  puts optparse.help
-  exit(1)
+def main()
+  options = {}
+
+  optparse = OptionParser.new do |opts|
+    opts.banner = "Usage: terminate-instance -o OWNER NAME"
+
+    options[:owner] = ""
+    opts.on('-o', '--owner OWNER', "Owner of the instance") { |o| options[:owner] = o }
+  end
+
+  optparse.parse!
+
+  if options[:owner].empty? or ARGV.length != 1
+    puts "Must specify OWNER and NAME"
+    puts optparse.help
+    exit(1)
+  end
+
+  name = ARGV[0]
+
+  verify_access_key()
+
+  terminate_instance(name, options)
 end
 
-name = ARGV[0]
 
-terminate_instance(name, options)
+main()

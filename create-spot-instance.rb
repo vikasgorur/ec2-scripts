@@ -66,46 +66,61 @@ def create_spot_instance(name, options)
   ec2.create_tags(:resource_id => instanceId, :tag => tags)
 end
 
-options = {}
 
-optparse = OptionParser.new do |opts|
-  opts.banner = "Usage: create-spot-instance -k KEY -o OWNER [-t TYPE] [-z ZONE] [-g GROUP] [-e DAYS] [-m ADDR] NAME"
-
-  options[:key] = ""
-  opts.on('-k', '--key KEY', "SSH key name for the instance") { |k| options[:key] = k }
-
-  options[:owner] = ""
-  opts.on('-o', '--owner OWNER', "Owner of the instance") { |o| options[:owner] = o }
-
-  options[:type] = "m1.large"
-  opts.on('-t', '--type TYPE', "Type of the instance (default: m1.large)") { |t| options[:type] = t }
-
-  options[:zone] = nil
-  opts.on('-z', '--zone ZONE', "Availability zone for the instance") { |z| options[:zone] = z }
-
-  options[:group] = "default"
-  opts.on('-g', '--group GROUP', "Security group (default: 'default')") { |g| options[:group] = g }
-
-  options[:expires] = ""
-  opts.on('-e', '--expires DAYS', "Expiration period for the instance (in days)") { |e| options[:expires] = e }
-
-  options[:mail] = ""
-  opts.on('-m', '--mail ADDRESS', "E-mail address for reminders") { |m| options[:mail] = m }
+def verify_access_key()
+  if not (ENV.has_key?("AMAZON_ACCESS_KEY_ID") and ENV.has_key?("AMAZON_SECRET_ACCESS_KEY"))
+    puts "Please set AMAZON_ACCESS_KEY_ID and AMAZON_SECRET_ACCESS_KEY."
+    exit(1)
+  end
 end
 
-begin
-  optparse.parse!
-rescue OptionParser::InvalidOption
-  puts optparse.help
-  exit(1)
+
+def main()
+  options = {}
+
+  optparse = OptionParser.new do |opts|
+    opts.banner = "Usage: create-spot-instance -k KEY -o OWNER [-t TYPE] [-z ZONE] [-g GROUP] [-e DAYS] [-m ADDR] NAME"
+
+    options[:key] = ""
+    opts.on('-k', '--key KEY', "SSH key name for the instance") { |k| options[:key] = k }
+
+    options[:owner] = ""
+    opts.on('-o', '--owner OWNER', "Owner of the instance") { |o| options[:owner] = o }
+
+    options[:type] = "m1.large"
+    opts.on('-t', '--type TYPE', "Type of the instance (default: m1.large)") { |t| options[:type] = t }
+
+    options[:zone] = nil
+    opts.on('-z', '--zone ZONE', "Availability zone for the instance") { |z| options[:zone] = z }
+
+    options[:group] = "default"
+    opts.on('-g', '--group GROUP', "Security group (default: 'default')") { |g| options[:group] = g }
+
+    options[:expires] = ""
+    opts.on('-e', '--expires DAYS', "Expiration period for the instance (in days)") { |e| options[:expires] = e }
+
+    options[:mail] = ""
+    opts.on('-m', '--mail ADDRESS', "E-mail address for reminders") { |m| options[:mail] = m }
+  end
+
+  begin
+    optparse.parse!
+  rescue OptionParser::InvalidOption
+    puts optparse.help
+    exit(1)
+  end
+
+  if options[:key].empty? or options[:owner].empty? or ARGV.length != 1
+    puts "Must specify KEY, OWNER, and NAME"
+    puts optparse.help
+    exit(1)
+  end
+
+  name = ARGV[0]
+
+  verify_access_key()
+  create_spot_instance(name, options)
 end
 
-if options[:key].empty? or options[:owner].empty? or ARGV.length != 1
-  puts "Must specify KEY, OWNER, and NAME"
-  puts optparse.help
-  exit(1)
-end
 
-name = ARGV[0]
-
-create_spot_instance(name, options)
+main()

@@ -177,7 +177,6 @@ def terminate_expired_instances(options)
     end
   end
 
-  pp(owners)
   owners.each do |key, value|
     value.each do |i|
       ec2.terminate_instances(:instance_id => i[:instance])
@@ -188,24 +187,36 @@ def terminate_expired_instances(options)
 end
 
 
-options = {}
-
-optparse = OptionParser.new do |opts|
-  opts.banner = "Usage: aws-cop [-d]"
-
-  options[:owner] = ""
-  opts.on('-d', '--dry-run', "Dry-run. Don't actually delete volumes or terminate instances") { |l| options[:dryrun] = true }
+def verify_access_key()
+  if not (ENV.has_key?("AMAZON_ACCESS_KEY_ID") and ENV.has_key?("AMAZON_SECRET_ACCESS_KEY"))
+    puts "Please set AMAZON_ACCESS_KEY_ID and AMAZON_SECRET_ACCESS_KEY."
+    exit(1)
+  end
 end
 
-begin
-  optparse.parse!
-rescue OptionParser::InvalidOption
-  puts optparse.help
-  exit(1)
+
+def main()
+  options = {}
+
+  optparse = OptionParser.new do |opts|
+    opts.banner = "Usage: aws-cop [-d]"
+
+    options[:owner] = ""
+    opts.on('-d', '--dry-run', "Dry-run. Don't actually delete volumes or terminate instances") { |l| options[:dryrun] = true }
+  end
+
+  begin
+    optparse.parse!
+  rescue OptionParser::InvalidOption
+    puts optparse.help
+    exit(1)
+  end
+
+  verify_access_key()
+
+  reap_ebs_volumes(options)
+  send_24h_reminder(options)
+  terminate_expired_instances(options)
 end
 
-reap_ebs_volumes(options)
-
-send_24h_reminder(options)
-
-terminate_expired_instances(options)
+main()

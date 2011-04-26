@@ -13,7 +13,7 @@ end
 ACCESS_KEY_ID = ENV['AMAZON_ACCESS_KEY_ID']
 SECRET_ACCESS_KEY = ENV['AMAZON_SECRET_ACCESS_KEY']
 
-def describe(filterOwner="", showOnlyExpired=false)
+def list_instances(filterOwner="", showOnlyExpired=false)
   ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY)
 
   puts "#{'Instance ID'.ljust(12)}  #{'Type'.ljust(14)}  #{'Billing'.ljust(10)}  #{'Launch Time'.ljust(24)}  #{'Expires'.ljust(8)}  #{'Owner'.ljust(12)}  #{'Name'.ljust(20)}\n\n"
@@ -70,24 +70,38 @@ def describe(filterOwner="", showOnlyExpired=false)
   end
 end
 
-options = {}
 
-optparse = OptionParser.new do |opts|
-  opts.banner = "Usage: list-instances [-o <Owner>]"
-
-  options[:owner] = ""
-  opts.on('-o', '--owner OWNER', "Show only instances belonging to given owner") { |o| options[:owner] = o }
-
-  options[:expired] = false
-  opts.on('-e', '--expired', "Show only expired instances") { |e| options[:expired] = true }
+def verify_access_key()
+  if not (ENV.has_key?("AMAZON_ACCESS_KEY_ID") and ENV.has_key?("AMAZON_SECRET_ACCESS_KEY"))
+    puts "Please set AMAZON_ACCESS_KEY_ID and AMAZON_SECRET_ACCESS_KEY."
+    exit(1)
+  end
 end
 
-begin
-  optparse.parse!
-rescue OptionParser::InvalidOption
-  puts optparse.help
-  exit(1)
+
+def main()
+  options = {}
+
+  optparse = OptionParser.new do |opts|
+    opts.banner = "Usage: list-instances [-o <Owner>]"
+
+    options[:owner] = ""
+    opts.on('-o', '--owner OWNER', "Show only instances belonging to given owner") { |o| options[:owner] = o }
+
+    options[:expired] = false
+    opts.on('-e', '--expired', "Show only expired instances") { |e| options[:expired] = true }
+  end
+
+  begin
+    optparse.parse!
+  rescue OptionParser::InvalidOption
+    puts optparse.help
+    exit(1)
+  end
+
+  verify_access_key()
+  list_instances(filterOwner=options[:owner], showOnlyExpired=options[:expired])
 end
 
-describe(filterOwner=options[:owner], showOnlyExpired=options[:expired])
 
+main()
