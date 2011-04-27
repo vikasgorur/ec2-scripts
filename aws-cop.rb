@@ -20,6 +20,10 @@ def reap_ebs_volumes(options)
 
   volSet = ec2.describe_volumes().volumeSet
 
+  if not volSet
+    return
+  end
+
   volSet.item.each do |vol|
     if vol.status == "available"
       (hours, minutes, seconds, frac) = Date.day_fraction_to_time(DateTime.now - DateTime.parse(vol.createTime))
@@ -108,8 +112,13 @@ def send_24h_reminder(options)
   ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY)
 
   owners = {}
-  rsItems = ec2.describe_instances().reservationSet.item
-  rsItems.each do |reservationItem|
+  res = ec2.describe_instances().reservationSet
+
+  if not res
+    return
+  end
+
+  res.item.each do |reservationItem|
     reservationItem.instancesSet.item.each do |instanceItem|
       instanceId = instanceItem.instanceId
       dns = instanceItem.dnsName
@@ -146,8 +155,13 @@ def terminate_expired_instances(options)
   ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY)
 
   owners = {}
-  rsItems = ec2.describe_instances().reservationSet.item
-  rsItems.each do |reservationItem|
+  res = ec2.describe_instances().reservationSet
+
+  if not res
+    return
+  end
+
+  res.item.each do |reservationItem|
     reservationItem.instancesSet.item.each do |instanceItem|
       instanceId = instanceItem.instanceId
       dns = instanceItem.dnsName
