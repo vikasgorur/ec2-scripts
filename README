@@ -3,93 +3,70 @@ EC2 Scripts README
 ==================
 
 This repository contains a set of convenience scripts to
-deal with EC2 instances and EBS volumes.
+manage AWS resources at Gluster.
+
+------
+Source
+------
+
+The github repository for this scripts is: https://github.com/vikasgorur/ec2-scripts
 
 -----
 Setup
 -----
 
-Before using these scripts, edit the file `sourceme.sh' in
-this directory and modify the following line:
-	EC2_OWNER="Vikas"
+The tools require Ruby (>= 1.8.7) to be installed, along with the following Ruby gems:
+    amazon-ec2 (https://github.com/grempe/amazon-ec2)
 
-Change it to your own name, or your dog's name, or your nickname.
+# gem update --system
+# gem install amazon-ec2
 
-Edit the following line and set the name of your EC2 SSH key.
-	EC2_SSH_KEY="vikas"
+The tools also require that two environment variables be set:
 
-Copy the relevant pk-*.pem and cert-*.pem to this directory.
+export AMAZON_ACCESS_KEY_ID=
+export AMAZON_SECRET_ACCESS_KEY=
+
+These should be set to your AWS API access keys.
 
 -----
 Usage
 -----
 
-The scripts in this directory are commands that let you operate on EC2 instances
-and EBS volumes by referring to them by names given to them by you.
-
-Before you run any of these commands, you must first do:
-
-$ source sourceme.sh
-
 --------
 Commands
 --------
 
-Create an instance:
-	./create-instance server1
+Create a spot instance:
 
-	This creates an instance and gives it the name "server1". The name is
-	stored with the instance as a tag. The script also adds another tag, "Owner",
-	with the value $EC2_OWNER.
+Usage: create-spot-instance -k KEY -o OWNER [-t TYPE] [-z ZONE] [-g GROUP] [-e DAYS] [-m ADDR] NAME
+    -k, --key KEY                    SSH key name for the instance
+    -o, --owner OWNER                Owner of the instance
+    -t, --type TYPE                  Type of the instance (default: m1.large)
+    -z, --zone ZONE                  Availability zone for the instance
+    -g, --group GROUP                Security group (default: 'default')
+    -e, --expires DAYS               Expiration period for the instance (in days)
+    -m, --mail ADDRESS               E-mail address for reminders
+
+The expiration period and reminder email address are needed for aws-cop to enforce them. If no such enforcement
+is needed in your AWS account, you can choose to not specify them.
 
 Terminate an instance:
-	./terminate-instance server1
 
-Stop an instance:
-	./stop-instance server1
+Usage: terminate-instance -o OWNER NAME
+    -o, --owner OWNER                Owner of the instance
 
-List your instances:
-	./describe-instances
+List instances:
 
-Login (ssh) to an instance:
-	./connect server1
+Usage: list-instances [-o <Owner>]
+    -o, --owner OWNER                Show only instances belonging to given owner
+    -e, --expired                    Show only expired instances
 
-	The SSH key file $EC2_SSH_KEY.pem should exist in this directory.
+Modify expiry date:
 
-Copy (scp) a file/directory to the $HOME of the root user on an instance:
-	./copy server1 /tmp/somefile
-
-Copy (scp) a file/directory from the $HOME of the root user:
-	./copy-from server1 somefile
-
-	This copies /root/somefile on the instance to the current directory.
-
-Copy these scripts to an instance:
-	./copy-self server1
-	
-	This copies the contents of this directory (the scripts) to the instance.
-
-	Tip: This script is now legacy. It is easier to just git clone this repository
-	on the target instance.
-
-Create a volume and attach:
-	./create-volume server1 sdd 10
-
-	This creates a 10GB EBS volume, and tags it with the name "server1-sdd", and attaches
-	it to the instance "server1" as the device /dev/sdd.
-
-Delete all volumes attached to an instance:
-	./delete-volumes server1
-
-	This deletes all volumes with names starting with "server1-".
-
-Describe volumes:
-	./describe-volumes
-
-List volumes:
-	./list-volumes
-
-	Just lists the volume IDs.
+Usage: modify-expiry-date -o OWNER [-p N] [-m N] NAME
+    -p, --plus N                     Add N days to the expiry date
+    -m, --minus N                    Subtract N days from the expiry date
+    -o, --owner OWNER                Owner of the instance
 
 -------
 Contact
