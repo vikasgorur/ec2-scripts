@@ -31,7 +31,7 @@ def terminate_instance(name, options)
           instanceOwner = tag.value
         end
 
-        tag = instanceItem.tagSet.item.find_all {|i| i.key == "Name"}[0]
+        tag = instanceItem.tagSet.item.find_all {|i| i.key == "Nickname"}[0]
         if not tag.nil? and not tag.value.nil?
           instanceName = tag.value
         end
