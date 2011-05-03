@@ -16,7 +16,7 @@ SECRET_ACCESS_KEY = ENV['AMAZON_SECRET_ACCESS_KEY']
 def list_instances(filterOwner="", showOnlyExpired=false)
   ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY)
 
-  puts "#{'Instance ID'.ljust(12)}  #{'Type'.ljust(14)}  #{'Billing'.ljust(10)}  #{'Launch Time'.ljust(24)}  #{'Expires'.ljust(8)}  #{'Owner'.ljust(12)}  #{'Name'.ljust(20)}\n\n"
+  puts "#{'Instance ID'.ljust(12)}  #{'Type'.ljust(14)}  #{'Billing'.ljust(10)}  #{'DNS'.ljust(48)}  #{'Expires'.ljust(8)}  #{'Owner'.ljust(12)}  #{'Name'.ljust(20)}\n\n"
 
   result = ec2.describe_instances()
 
@@ -29,7 +29,7 @@ def list_instances(filterOwner="", showOnlyExpired=false)
   rsItems.each do |reservationItem|
     reservationItem.instancesSet.item.each do |instanceItem|
       instanceId = instanceItem.instanceId
-      launchTime = instanceItem.launchTime.gsub(/T|Z/, " ")
+      dns        = instanceItem.dnsName
       type       = instanceItem.instanceType
       if instanceItem.instanceLifecycle.nil?
         billing = "On-demand"
@@ -64,7 +64,7 @@ def list_instances(filterOwner="", showOnlyExpired=false)
 
       if ((filterOwner.empty?) or (filterOwner == owner)) and (state == "running") and
           ((showOnlyExpired == false) or (not expire_date.nil? and (expire_date < DateTime.now)))
-        puts "#{instanceId.ljust(12)}  #{type.ljust(14)}  #{billing.ljust(10)}  #{launchTime.ljust(24)}  #{expires.ljust(8)}  #{owner.ljust(12)}  #{name.ljust(20)}"
+        puts "#{instanceId.ljust(12)}  #{type.ljust(14)}  #{billing.ljust(10)}  #{dns.ljust(48)}  #{expires.ljust(8)}  #{owner.ljust(12)}  #{name.ljust(20)}"
       end
     end
   end
