@@ -1,11 +1,18 @@
 #!/usr/bin/env ruby
 
-require 'rubygems'
-require 'AWS'
-require 'optparse'
-require 'pony'
-require 'date'
-require 'pp'
+begin
+  require 'rubygems'
+  require 'AWS'
+  require 'optparse'
+  require 'pony'
+  require 'date'
+  require 'pp'
+
+  require 'common'
+rescue LoadError
+  puts "Could not load a required module. Make sure you have the gems 'amazon-ec2' and 'pony' installed."
+  exit(1)
+end
 
 ACCESS_KEY_ID = ENV['AMAZON_ACCESS_KEY_ID']
 SECRET_ACCESS_KEY = ENV['AMAZON_SECRET_ACCESS_KEY']
@@ -198,14 +205,6 @@ def terminate_expired_instances(options)
   end
 
   send_email(owners, options, :termination)
-end
-
-
-def verify_access_key()
-  if not (ENV.has_key?("AMAZON_ACCESS_KEY_ID") and ENV.has_key?("AMAZON_SECRET_ACCESS_KEY"))
-    puts "Please set AMAZON_ACCESS_KEY_ID and AMAZON_SECRET_ACCESS_KEY."
-    exit(1)
-  end
 end
 
 
