@@ -5,6 +5,7 @@ begin
   require 'AWS'
   require 'optparse'
   require 'date'
+  require 'common'
 rescue LoadError
   puts "Could not load a required module. Make sure you have the gem 'amazon-ec2' installed."
   exit(1)
@@ -14,8 +15,9 @@ ACCESS_KEY_ID = ENV['AMAZON_ACCESS_KEY_ID']
 SECRET_ACCESS_KEY = ENV['AMAZON_SECRET_ACCESS_KEY']
 GLUSTER_AMI="ami-5c8d7e35"
 
-def terminate_instance(name, options)
-  ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY)
+def terminate_instance(server, name, options)
+  ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY,
+                           :server => server)
 
   rsItems = ec2.describe_instances().reservationSet.item
 
@@ -46,14 +48,6 @@ def terminate_instance(name, options)
 end
 
 
-def verify_access_key()
-  if not (ENV.has_key?("AMAZON_ACCESS_KEY_ID") and ENV.has_key?("AMAZON_SECRET_ACCESS_KEY"))
-    puts "Please set AMAZON_ACCESS_KEY_ID and AMAZON_SECRET_ACCESS_KEY."
-    exit(1)
-  end
-end
-
-
 def main()
   options = {}
 
@@ -62,6 +56,16 @@ def main()
 
     options[:owner] = ""
     opts.on('-o', '--owner OWNER', "Owner of the instance") { |o| options[:owner] = o }
+
+    options[:region] = "us-east-1"
+    opts.on('-r', '--region REGION', "Region for the instance (default: us-east-1).") do |r|
+      options[:region] = r
+      if url_for_region(r).nil?
+        puts "Region '#{r}' is not valid."
+        exit(1)
+      end
+    end
+
   end
 
   optparse.parse!
@@ -76,7 +80,8 @@ def main()
 
   verify_access_key()
 
-  terminate_instance(name, options)
+  server = url_for_region(options[:region])
+  terminate_instance(server, name, options)
 end
 
 

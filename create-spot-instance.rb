@@ -5,6 +5,7 @@ begin
   require 'AWS'
   require 'optparse'
   require 'date'
+  require 'common'
 rescue LoadError
   puts "Could not load a required module. Make sure you have the gem 'amazon-ec2' installed."
   exit(1)
@@ -12,13 +13,20 @@ end
 
 ACCESS_KEY_ID = ENV['AMAZON_ACCESS_KEY_ID']
 SECRET_ACCESS_KEY = ENV['AMAZON_SECRET_ACCESS_KEY']
-GLUSTER_AMI="ami-5c8d7e35"
 
-def create_spot_instance(name, options)
-  ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY)
+
+def create_spot_instance(server, name, options)
+  ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY,
+                           :server => server)
+
+  ami = gluster_ami_for_region(options[:region])
+  if ami.nil?
+    puts "No Gluster AMI known for region #{options[:region]}."
+    exit(1)
+  end
 
   reqStarted = Time.now
-  req = ec2.request_spot_instances(:instance_count => 1, :spot_price => "0.6", :image_id => GLUSTER_AMI,
+  req = ec2.request_spot_instances(:instance_count => 1, :spot_price => "0.6", :image_id => ami,
                                    :instance_type => options[:type], :availability_zone => options[:zone],
                                    :security_group => options[:group], :key_name => options[:key])
 
@@ -67,19 +75,11 @@ def create_spot_instance(name, options)
 end
 
 
-def verify_access_key()
-  if not (ENV.has_key?("AMAZON_ACCESS_KEY_ID") and ENV.has_key?("AMAZON_SECRET_ACCESS_KEY"))
-    puts "Please set AMAZON_ACCESS_KEY_ID and AMAZON_SECRET_ACCESS_KEY."
-    exit(1)
-  end
-end
-
-
 def main()
   options = {}
 
   optparse = OptionParser.new do |opts|
-    opts.banner = "Usage: create-spot-instance -k KEY -o OWNER [-t TYPE] [-z ZONE] [-g GROUP] [-e DAYS] [-m ADDR] NAME"
+    opts.banner = "Usage: create-spot-instance -k KEY -o OWNER [-t TYPE] [-r REGION] [-z ZONE] [-g GROUP] [-e DAYS] [-m ADDR] NAME"
 
     options[:key] = ""
     opts.on('-k', '--key KEY', "SSH key name for the instance") { |k| options[:key] = k }
@@ -92,6 +92,15 @@ def main()
 
     options[:zone] = nil
     opts.on('-z', '--zone ZONE', "Availability zone for the instance") { |z| options[:zone] = z }
+
+    options[:region] = "us-east-1"
+    opts.on('-r', '--region REGION', "Region for the instance (default: us-east-1).") do |r|
+      options[:region] = r
+      if url_for_region(r).nil?
+        puts "Region '#{r}' is not valid."
+        exit(1)
+      end
+    end
 
     options[:group] = "default"
     opts.on('-g', '--group GROUP', "Security group (default: 'default')") { |g| options[:group] = g }
@@ -119,7 +128,9 @@ def main()
   name = ARGV[0]
 
   verify_access_key()
-  create_spot_instance(name, options)
+
+  server = url_for_region(options[:region])
+  create_spot_instance(server, name, options)
 end
 
 

@@ -5,6 +5,7 @@ begin
   require 'date'
   require 'AWS'
   require 'optparse'
+  require 'common'
 rescue LoadError
   puts "Could not load a required module. Make sure you have the gem 'amazon-ec2' installed."
   exit(1)
@@ -13,8 +14,9 @@ end
 ACCESS_KEY_ID = ENV['AMAZON_ACCESS_KEY_ID']
 SECRET_ACCESS_KEY = ENV['AMAZON_SECRET_ACCESS_KEY']
 
-def list_instances(filterOwner="", showOnlyExpired=false)
-  ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY)
+def list_instances(server, filterOwner="", showOnlyExpired=false)
+  ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY,
+                           :server => server)
 
   puts "#{'Instance ID'.ljust(12)}  #{'Type'.ljust(14)}  #{'Billing'.ljust(10)}  #{'DNS'.ljust(48)}  #{'Expires'.ljust(8)}  #{'Owner'.ljust(12)}  #{'Name'.ljust(20)}\n\n"
 
@@ -71,19 +73,20 @@ def list_instances(filterOwner="", showOnlyExpired=false)
 end
 
 
-def verify_access_key()
-  if not (ENV.has_key?("AMAZON_ACCESS_KEY_ID") and ENV.has_key?("AMAZON_SECRET_ACCESS_KEY"))
-    puts "Please set AMAZON_ACCESS_KEY_ID and AMAZON_SECRET_ACCESS_KEY."
-    exit(1)
-  end
-end
-
-
 def main()
   options = {}
 
   optparse = OptionParser.new do |opts|
-    opts.banner = "Usage: list-instances [-o <Owner>]"
+    opts.banner = "Usage: list-instances [-o <Owner>] [-r REGION]"
+
+    options[:region] = "us-east-1"
+    opts.on('-r', '--region REGION', "Show instances from REGION (default: us-east-1)") do |r|
+      options[:region] = r
+      if url_for_region(r).nil?
+        puts "Region '#{r}' is not valid."
+        exit(1)
+      end
+    end
 
     options[:owner] = ""
     opts.on('-o', '--owner OWNER', "Show only instances belonging to given owner") { |o| options[:owner] = o }
@@ -100,7 +103,9 @@ def main()
   end
 
   verify_access_key()
-  list_instances(filterOwner=options[:owner], showOnlyExpired=options[:expired])
+
+  server = url_for_region(options[:region])
+  list_instances(server, filterOwner=options[:owner], showOnlyExpired=options[:expired])
 end
 
 

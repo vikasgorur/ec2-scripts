@@ -7,7 +7,7 @@ def url_for_region(region)
     "ap-southeast-1" => "ec2.ap-southeast-1.amazonaws.com"
   }
 
-  return region_urls[region]
+  region_urls[region]
 end
 
 
@@ -19,3 +19,14 @@ def verify_access_key()
 end
 
 
+def gluster_ami_for_region(region)
+  amis = {
+    "us-east-1" => "ami-5c8d7e35",
+    "us-west-1" => "ami-f3d686b6",
+    "eu-west-1" => "ami-83e3d7f7",
+#    "ap-northeast-1" => "",
+    "ap-southeast-1" => "ami-83e3d7f7"
+  }
+
+  amis[region]
+end
