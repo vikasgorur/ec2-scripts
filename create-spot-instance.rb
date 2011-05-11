@@ -19,10 +19,14 @@ def create_spot_instance(server, name, options)
   ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY,
                            :server => server)
 
-  ami = gluster_ami_for_region(options[:region])
-  if ami.nil?
-    puts "No Gluster AMI known for region #{options[:region]}."
-    exit(1)
+  if not options[:ami].empty?
+    ami = options[:ami]
+  else
+    ami = gluster_ami_for_region(options[:region])
+    if ami.nil?
+      puts "No Gluster AMI known for region #{options[:region]}."
+      exit(1)
+    end
   end
 
   reqStarted = Time.now
@@ -79,7 +83,7 @@ def main()
   options = {}
 
   optparse = OptionParser.new do |opts|
-    opts.banner = "Usage: create-spot-instance -k KEY -o OWNER [-t TYPE] [-r REGION] [-z ZONE] [-g GROUP] [-e DAYS] [-m ADDR] NAME"
+    opts.banner = "Usage: create-spot-instance -k KEY -o OWNER [-t TYPE] [-r REGION] [-a AMI] [-z ZONE] [-g GROUP] [-e DAYS] [-m ADDR] NAME"
 
     options[:key] = ""
     opts.on('-k', '--key KEY', "SSH key name for the instance") { |k| options[:key] = k }
@@ -100,6 +104,11 @@ def main()
         puts "Region '#{r}' is not valid."
         exit(1)
       end
+    end
+
+    options[:ami] = ""
+    opts.on('-a', '--ami AMI', "AMI to use for the instance (default: Gluster AMI for the region).") do |a|
+      options[:ami] = a
     end
 
     options[:group] = "default"
