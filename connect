@@ -1,7 +1,6 @@
 #!/bin/bash
 
-NAME=$1
-KEY=$PWD/*.pem
+name=$1
 
 if [ $# -lt 1  ]; then
     echo "Usage: $0 <Name> [user]"
@@ -14,10 +13,18 @@ else
     USER=$2
 fi
 
-hostname=$(./list-instances.rb | grep "$NAME" | awk '{print $4}')
+read hostname key <<<$(./list-instances.rb | grep "$name" | awk '{print $4,$NF}')
+
 if [ -z $hostname ]; then
     echo "$NAME: No such instance exists."
     exit 1
 fi
 
-ssh -i $KEY -o StrictHostKeyChecking=no $USER@$hostname
+keyfile="$PWD/$key.pem"
+
+if [ ! -f "$keyfile" ]; then
+    echo "Required SSH key file $keyfile does not exist."
+    exit 1
+fi
+
+ssh -i $keyfile -o StrictHostKeyChecking=no $USER@$hostname
