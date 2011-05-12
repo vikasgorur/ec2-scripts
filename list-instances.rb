@@ -18,7 +18,7 @@ def list_instances(server, filterOwner="", showOnlyExpired=false)
   ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY,
                            :server => server)
 
-  puts "#{'Instance ID'.ljust(12)}  #{'Type'.ljust(14)}  #{'Billing'.ljust(10)}  #{'DNS'.ljust(48)}  #{'Expires'.ljust(8)}  #{'Owner'.ljust(12)}  #{'Name'.ljust(20)}\n\n"
+  puts "#{'Instance ID'.ljust(12)}  #{'Type'.ljust(14)}  #{'Billing'.ljust(10)}  #{'DNS'.ljust(48)}  #{'Expires'.ljust(8)}  #{'Owner'.ljust(12)}  #{'Name'.ljust(20)}  #{'Key'.ljust(12)}\n\n"
 
   result = ec2.describe_instances()
 
@@ -33,6 +33,8 @@ def list_instances(server, filterOwner="", showOnlyExpired=false)
       instanceId = instanceItem.instanceId
       dns        = instanceItem.dnsName
       type       = instanceItem.instanceType
+      key        = instanceItem.keyName
+
       if instanceItem.instanceLifecycle.nil?
         billing = "On-demand"
       else
@@ -66,7 +68,7 @@ def list_instances(server, filterOwner="", showOnlyExpired=false)
 
       if ((filterOwner.empty?) or (filterOwner == owner)) and (state == "running") and
           ((showOnlyExpired == false) or (not expire_date.nil? and (expire_date < DateTime.now)))
-        puts "#{instanceId.ljust(12)}  #{type.ljust(14)}  #{billing.ljust(10)}  #{dns.ljust(48)}  #{expires.ljust(8)}  #{owner.ljust(12)}  #{name.ljust(20)}"
+        puts "#{instanceId.ljust(12)}  #{type.ljust(14)}  #{billing.ljust(10)}  #{dns.ljust(48)}  #{expires.ljust(8)}  #{owner.ljust(12)}  #{name.ljust(20)}  #{key.ljust(12)}"
       end
     end
   end
