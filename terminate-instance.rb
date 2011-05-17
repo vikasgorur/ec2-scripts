@@ -19,7 +19,13 @@ def terminate_instance(server, name, options)
   ec2 = AWS::EC2::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY,
                            :server => server)
 
-  rsItems = ec2.describe_instances().reservationSet.item
+  rsSet = ec2.describe_instances().reservationSet
+  if rsSet.nil?
+    puts "No instance owned by '#{options[:owner]}' named '#{name}' exists."
+    return
+  end
+
+  rsItems = rsSet.item
 
   rsItems.each do |reservationItem|
     reservationItem.instancesSet.item.each do |instanceItem|
@@ -42,9 +48,12 @@ def terminate_instance(server, name, options)
       if (instanceOwner == options[:owner]) and (instanceName == name)
         ec2.terminate_instances(:instance_id => instanceId)
         puts "Instance #{instanceId} terminated."
+        return
       end
     end
   end
+
+  puts "No instance owned by '#{options[:owner]}' named '#{name}' exists."
 end
 
 
