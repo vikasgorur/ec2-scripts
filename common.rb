@@ -21,11 +21,11 @@ end
 
 def gluster_ami_for_region(region)
   amis = {
-    "us-east-1" => "ami-5c8d7e35",
-    "us-west-1" => "ami-f3d686b6",
-    "eu-west-1" => "ami-83e3d7f7",
+    "us-east-1" => "ami-08f80661",
+    "us-west-1" => "ami-23d48766",
+    "eu-west-1" => "ami-7f1f290b",
 #    "ap-northeast-1" => "",
-    "ap-southeast-1" => "ami-83e3d7f7"
+    "ap-southeast-1" => "ami-e49238e5"
   }
 
   amis[region]
