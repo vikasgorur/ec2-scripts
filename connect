@@ -13,7 +13,7 @@ else
     USER=$2
 fi
 
-read hostname key <<<$(./list-instances.rb | grep "$name" | awk '{print $4,$NF}')
+read hostname key <<<$(./list-instances.rb | grep -w "\<$name" | awk '{print $4,$NF}')
 
 if [ -z $hostname ]; then
     echo "$NAME: No such instance exists."
